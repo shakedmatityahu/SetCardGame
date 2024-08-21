@@ -72,20 +72,6 @@ Welcome to the Set Card Game! This project implements the popular card game "Set
 - Press the corresponding keys to select or deselect cards.
 - Once three cards are selected, the game will automatically check if they form a valid set.
 
-## Contributing
-
-Contributions to this project are welcome! If you find any bugs or have ideas for improvements, feel free to open an issue or submit a pull request.
-
-1. Fork the repository.
-2. Create a new branch for your contribution.
-3. Make your changes and commit them.
-4. Push your changes to your fork.
-5. Open a pull request, describing the changes you've made.
-
-## License
-
-This project is licensed under the [MIT License](https://github.com/yourusername/SetCardGame/blob/main/LICENSE).
-
 ---
 
 Enjoy playing the Set Card Game! May your card-finding skills be sharp and your matches quick. If you have any questions or need assistance, feel free to reach out in the Issues section of the repository. Have fun!
