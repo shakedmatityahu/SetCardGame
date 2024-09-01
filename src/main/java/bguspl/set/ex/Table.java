@@ -1,10 +1,13 @@
 package bguspl.set.ex;
 
 import bguspl.set.Env;
+import bguspl.set.UserInterface;
 
 import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 /**
@@ -30,6 +33,12 @@ public class Table {
     protected final Integer[] cardToSlot; // slot per card (if any)
 
     /**
+     * Matrix represent the player's tokens.
+     */
+    int [][] slotsWithTokens; // each row represent specific player tokens
+
+
+    /**
      * Constructor for testing.
      *
      * @param env        - the game environment objects.
@@ -41,6 +50,10 @@ public class Table {
         this.env = env;
         this.slotToCard = slotToCard;
         this.cardToSlot = cardToSlot;
+        slotsWithTokens=new int [env.config.players] [env.config.featureSize];
+        for (int[] subarr : slotsWithTokens) {
+            Arrays.fill(subarr, -1);
+        }
     }
 
     /**
@@ -93,9 +106,7 @@ public class Table {
 
         cardToSlot[card] = slot;
         slotToCard[slot] = card;
-
-        // TODO implement
-        //userInterface::placeCard(int card, int slot)
+        env.ui.placeCard(card, slot);
     }
 
     /**
@@ -106,11 +117,9 @@ public class Table {
         try {
             Thread.sleep(env.config.tableDelayMillis);
         } catch (InterruptedException ignored) {}
-
-        // TODO implement
-        //cardToSlot[SlotToCard[slot]]=-1;
-        //slotToCard[slot]=-1;
-        //userInterface::removeCard
+        cardToSlot[slotToCard[slot]] = -1;
+        slotToCard[slot] = -1;
+        env.ui.removeCard(slot);
     }
 
     /**
@@ -119,8 +128,37 @@ public class Table {
      * @param slot   - the slot on which to place the token.
      */
     public void placeToken(int player, int slot) {
-        // TODO implement
-        //call placeToken in userInterface ::placeToken
+        synchronized(slotsWithTokens)
+        {
+            env.ui.placeToken(player, slot); //userIterface update
+            int cell=findFreeCellInMatrix(player); //find a free cell to insret the token
+            slotsWithTokens[player][cell]=slot; //add the slot to the slotWithTokens matrix
+        }
+
+        env.logger.warning("Thread " + Thread.currentThread().getName() + " TABLE after placeToken: "+ slotsWithTokens[player][0]+", "+slotsWithTokens[player][1]+","+slotsWithTokens[player][2]);
+
+    }
+
+    /**
+     * Removes a token of a player from a grid slot.
+     * @param slot   - the slot from which to remove the token.
+     * @return       - true iff a token was successfully removed.
+     */
+    public boolean removeToken(int slot) {
+        env.ui.removeTokens(slot);
+        // empty relevant cell in slotsWithTokens (delete non-existing tokens)
+        boolean removed = false;
+        synchronized(slotsWithTokens) {
+            for (int pId = 0; pId < slotsWithTokens.length; pId++) {
+                for (int s = 0; s < slotsWithTokens[pId].length; s++) {
+                    if(slotsWithTokens[pId][s] == slot) {
+                        slotsWithTokens[pId][s] = -1;
+                        removed = true;
+                    }
+                }
+            }
+        }
+        return removed;
     }
 
     /**
@@ -129,11 +167,78 @@ public class Table {
      * @param slot   - the slot from which to remove the token.
      * @return       - true iff a token was successfully removed.
      */
-    public boolean removeToken(int player, int slot) {
-        // TODO implement
-        //call removeToken in userInterface ::removeToken
-        // empty relevant cell in slotsWithTokens (delete non-existing tokens)
+    public boolean removeTokenByPlayer(int player, int slot) {
+        env.ui.removeToken(player, slot);
+        int slotIdx;
+        env.logger.log(Level.INFO, "Thread " + Thread.currentThread().getName() + " trying to obatin access to 1-d array.");
+        synchronized(slotsWithTokens[player]) {
+            slotIdx = indexOf(slotsWithTokens[player], slot);
+            if(slotIdx < 0) {
+                return false;
+            }
+            slotsWithTokens[player][slotIdx] = -1;
+            return true;
+        }
+    }
 
-        return false;
+    /**
+     * Finds the index of the given value in the array. This method returns (-1) for not found.
+     */
+    private int indexOf(int[] arr, int value)
+    {
+        int index = -1;
+        for (int i = 0; i < arr.length; i++)
+        {
+            if(arr[i] == value) {
+                index = i;
+                return index;
+            }
+        }
+        return index;
+    }
+
+    public boolean thirdChoiceWasMade (int playerId)
+    {
+        synchronized(slotsWithTokens[playerId])
+        {
+            for(int i=0;i<slotsWithTokens[playerId].length;i++)
+            {
+                if(slotsWithTokens[playerId][i]==-1) //not a token
+                    return false;
+            }
+        }
+        return true;
+    }
+
+    public List<Integer> findPlayerWithToken(int slot)
+    {
+        List<Integer> playersWithToken = new ArrayList<Integer>();
+        for(int i=0;i<slotsWithTokens.length;i++)
+        {
+            for(int  j=0;j<slotsWithTokens[i].length;j++)
+            {
+                if(slotsWithTokens[i][j]==slot)
+                    playersWithToken.add(i);
+            }
+        }
+        return playersWithToken;
+    }
+
+    public int findFreeCellInMatrix(int player)
+    {
+        synchronized(slotsWithTokens[player])
+        {
+            for(int i=0; i<slotsWithTokens[player].length;i++)
+            {
+                if(slotsWithTokens[player][i]==-1)
+                    return i;
+            }
+        }
+        return -1; // Shouldn't get here
+    }
+
+    public int [][] getSlotsWithToken()
+    {
+        return slotsWithTokens;
     }
 }

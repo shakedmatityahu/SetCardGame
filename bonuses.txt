@@ -1,0 +1,44 @@
+BONUS CHALLENGE FORM
+--------------------
+
+For each bonus challenge you have implemented, please replace the sentence "We are not entitled to this bonus."
+with a short description of:
+
+1. How it was implemented in your code
+2. Where it was used (in which class methods).
+3. How you tested that it is working correctly.
+
+--------------------
+
+1. Fully supporting all configuration fields and avoiding the use of magic numbers
+
+1. Every time we used a number that describes sizes like the number of rows in the grid, number of freeze seconds etc. we used the relevant configuration parameter instead of an actual number.
+2. Dealer: constructor, timerloop, placeCardsOnTable, placeCardsOnEntireTable, updateTimerDisplay, removeAllCardsFromTable.
+Player: constructor, sleepAfterSet.
+Table: constructor, placeCard, removeCard.
+3. We changed each configuration parameter in the config.properties and ran the program. If the relevant "feature" changed accordingly then we knew that it was working. For example we changed the PlayerNames parameter, when we ran the program, the relevant names appeared.
+
+--------------------
+
+2. Terminating all threads (that you created) gracefully and in reverse order to the order they were created in.
+
+We are not entitled to this bonus.
+--------------------
+
+3. Handling the config.turnTimeoutMillis value as follows:
+config.turnTimeoutMillis < 0: display nothing.
+config.turnTimeoutMillis = 0: display a timer since the last action (reshuffle or set collected).
+Note: in modes without a countdown timer the dealer must ensure there is always at least one legal set on the table.
+
+We are not entitled to this bonus.
+
+--------------------
+
+4. Making sure that the threads do not wake up unless some actual job needs to be done (e.g., a value needs to be
+changed on the display, key input needs to be handled, etc.) and the only threads created by you are:
+1 thread per player + 1 additional thread for non-human players.
+
+1. How it was implemented in your code: we mainly used 2 mechanics to ensure that. First, an ArrayBlockingQueue of key presses to ensure that a player only acts if the array isn't empty (otherwise, it waits until another thread puts an element inside), another ArrayBlockingQueue of players that declared a set to ensure that the dealer only acts if the array isn't empty (it also implements FIFO). Second, we used wait to ensure that a player waits until it gets a point or a penalty (notifyAll) from the dealer.
+2. Where it was used (in which class methods): Player: constructor, run, createArtificialIntelligence, keyPressed.
+Dealer: constructor, sleepUntilWokenOrTimeOut, removeAllCardsFromTable, declareSet.
+3. How you tested that it is working correctly: we used a lot of logs to indicate when the thread was running and when it was waiting.
